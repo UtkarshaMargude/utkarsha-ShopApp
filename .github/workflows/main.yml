@@ -1,56 +1,22 @@
-name: Deploy
+deploy:
+  name: Deploy
+  needs: build
+  runs-on: ubuntu-latest
+  if: github.ref == 'refs/heads/master'
 
-on:
-  push:
-    branches:
-      - master  # Ensure this matches your repo branch
+  steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: production-files
+        path: ./dist
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18  # Use a stable version
-
-      - name: Install dependencies
-        run: npm install  # Install project dependencies
-
-      - name: Build project
-        run: npm run build  # This should generate the `dist` folder
-
-      - name: Upload production-ready build files
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-files
-          path: ./dist
-
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'  # Ensure this matches the repo branch
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-files
-          path: ./dist
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages  # Ensure it deploys to the correct branch
-          publish_dir: ./dist
-          cname: ""  # Remove if you are not using a custom domain
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        personal_token: ${{ secrets.GH_PAT }}
+        publish_branch: gh-pages
+        publish_dir: ./dist
